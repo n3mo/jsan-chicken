@@ -5,20 +5,19 @@ Convert (and subset) json files to csv from the command line
 
 ## Usage
 
-./json2csv filepath.json *options*
-
-As a result, a csv file called `filepath.csv` will be created.
+Assuming conversion of a file called `mydata.json`, the following commands will create a csv file called `mydata.csv`.
 
 **To convert the file mydata.json to mydata.csv:**
-    ./json2csv mydata.json
+
+    json2csv mydata.json
 
 **To convert AND only keep the data fields "text" and "created_on":**
 
-    ./json2csv mydata.json text created_on
+    json2csv mydata.json text created_on
 
 **To remove data fields, preface field names with a "-". The following will keep all fields EXCEPT "user" and "address":**
 
-    ./json2csv mydata.json -user -address
+    json2csv mydata.json -user -address
 
 ## Installation
 
