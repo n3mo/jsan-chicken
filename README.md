@@ -23,9 +23,13 @@ Assuming conversion of a file called `mydata.json`, the following commands will 
 
     json2csv mydata.json --keep text created_on
 
-**To remove data fields, preface field names with a "-". The following will keep all fields EXCEPT "user" and "address":**
+**You can also remove named data fields. The following will keep all fields EXCEPT "email" and "phone":**
 
-    json2csv mydata.json --remove user address
+    json2csv mydata.json --remove email phone
+
+**Nested JSON data fields can be accessed by using a colon. To keep the fields user->screen_name and user->bio->address**
+
+    json2csv mydata.json --keep user:screen_name user:bio:address
 
 ## Installation
 
