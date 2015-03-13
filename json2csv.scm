@@ -57,14 +57,13 @@
 (define opts
   (list (args:make-option (h help)   #:none "Help information"
 			  (usage))
-	;; (args:make-option (i input)   (required: "FILE") "Input file"
-	;; 		  (usage))
+	(args:make-option (i input)  #:none  "Input file")
 	(args:make-option (l list)   #:none "List available data fields"
-			  (print-fields))
+			  (set! display-fields? #t))
 	(args:make-option (k keep)   #:none "Data fields to keep"
-			  (keep-fields))
+			  (set! keep? #t))
 	(args:make-option (r remove)   #:none "Data fields to remove"
-			  (remove-fields))
+			  (set! keep? #f))
 	))
 
 ;;; This procedure is called whenever the user specifies the help
@@ -175,7 +174,8 @@
 
 ;;; Grab the value of a key from a nested alist
 (define (nested-alist-ref keys nested-alist)
-  (cond ((null? (cdr keys)) (alist-ref (car keys) nested-alist))
+  (cond ((or (not (cdr keys)) (null? (cdr keys)))
+	 (alist-ref (car keys) nested-alist))
 	(else (nested-alist-ref (cdr keys) (alist-ref (car keys) nested-alist)))))
 
 ;;; Same as string->symbol, but works for a list of lists (of strings)
@@ -221,24 +221,6 @@
 	    records))
 
 ;;; This gets the work done
-;; (define (json->csv in-file out-file #!key (flds #f) (keep? #f))
-;;   (let ((keys (with-input-from-file in-file
-;; 		(lambda ()
-;; 		  (nested-alist-keys (read-json (read-line)) #:flds
-;; 				     flds #:keep? keep?)))))
-;;     (with-output-to-file out-file
-;;       (lambda ()
-;; 	;; Write the csv header
-;; 	;; (write-csv (list keys))
-;; 	(write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
-;; 	(call-with-input-file in-file
-;; 	  (lambda (in)
-;; 	    (let loop ((in in))
-;; 	      (receive (object remainder)
-;; 		  (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
-;; 		(when object
-;; 		  (write-csv (list (alist->nested-list object keys)))
-;; 		  (loop remainder))))))))))
 (define (json->csv in-file #!key (flds #f) (keep? #f))
   (let ((keys (with-input-from-file in-file
 		(lambda ()
@@ -258,21 +240,18 @@
 
 ;;; Print available json fields (including nested fields)
 (define (print-fields)
-  (let ((myargs (list-operands (command-line-arguments))))
-    (if (null? myargs)
-	(usage)
-	(let ((in-file (car myargs)))
-	  (if (not (file-exists? in-file))
-	      (begin (print (string-append "Abort: Cannot find file " in-file))
-		     (exit 1))
-	      (with-input-from-file in-file
-		(lambda ()
-		  (for-each
-		   (lambda (x)
-		     (print (string-join (map symbol->string x) ":")))
-			    (nested-alist-keys (read-json
-						(read-line)))))))
-	  (exit 0)))))
+  (let ((in-file (alist-ref 'input options)))
+    (if (not (file-exists? in-file))
+	(begin (print (string-append "Abort: Cannot find file " in-file))
+	       (exit 1))
+	(with-input-from-file in-file
+	  (lambda ()
+	    (for-each
+	     (lambda (x)
+	       (print (string-join (map symbol->string x) ":")))
+	     (nested-alist-keys (read-json
+				 (read-line)))))))
+    (exit 0)))
 
 ;; (define (task-dispatch #!optional keep?)
 ;;   (let ((myargs (list-operands (command-line-arguments))))
@@ -291,41 +270,52 @@
 ;; 			 (exit 1))
 ;; 		  ;; If we've made it here, things are good to
 ;; 		  ;; go. Start processing the file
-;; 		  (json->csv in-file out-file #:flds field-args
-;; 			     #:keep? keep?)))))
+;; 		  (with-output-to-file out-file
+;; 		    (lambda ()
+;; 		      (json->csv in-file #:flds field-args
+;; 				 #:keep? keep?)))))))
 ;;     (exit 0)))
-(define (task-dispatch #!optional keep?)
-  (let ((myargs (list-operands (command-line-arguments))))
-    (if (null? myargs)
-    	(usage)
-    	(let* ((in-file (car myargs))
-	       (out-file (pathname-replace-extension in-file "csv"))
-	       (field-args (nested-string->symbol (map (lambda (x)
-							 (string-split x ":")) (cdr myargs)))))
-    	  (if (not (file-exists? in-file))
-	      (begin (print (string-append "Abort: Cannot find file " in-file))
-		     (exit 1))
-	      (if (file-exists? out-file)
-		  (begin (print (string-append "Abort: Output file " in-file
-					       " already exists!"))
-			 (exit 1))
-		  ;; If we've made it here, things are good to
-		  ;; go. Start processing the file
-		  (with-output-to-file out-file
-		    (lambda ()
-		      (json->csv in-file #:flds field-args
-				 #:keep? keep?)))))))
-    (exit 0)))
+(define (task-dispatch #!optional keep)
+  (let* ((in-file (alist-ref 'input options))
+	 (out-file
+	  (if in-file
+	      (pathname-replace-extension in-file "csv")
+	      #f))
+	 (field-args (nested-string->symbol
+		      (map (lambda (x) (string-split x ":"))
+			   operands))))
+    ;; DEBUG
+    ;; (print in-file)
+    ;; (print out-file)
+    ;; (print field-args)
+    ;; (exit 0)
+
+    (if display-fields? (print-fields))
+
+    (if (not (file-exists? in-file))
+	(begin (print (string-append "Abort: Cannot find file " in-file))
+	       (exit 1))
+	(if (file-exists? out-file)
+	    (begin (print (string-append "Abort: Output file " in-file
+					 " already exists!"))
+		   (exit 1))
+	    ;; If we've made it here, things are good to
+	    ;; go. Start processing the file
+	    (with-output-to-file out-file
+	      (lambda ()
+		(json->csv in-file #:flds field-args
+			   #:keep? keep?))))))
+  (exit 0))
 
 
 
-(define (keep-fields)
-  (task-dispatch #t)
-  (exit 1))
+;; (define (keep-fields)
+;;   (task-dispatch "keep")
+;;   (exit 1))
 
-(define (remove-fields)
-  (task-dispatch #f)
-  (exit 1))
+;; (define (remove-fields)
+;;   (task-dispatch "remove")
+;;   (exit 1))
 
 
 ;;; Just what you think. This gets things done when you don't supply
@@ -336,7 +326,17 @@
 
 ;;; This gets the ball rolling and handles exceptiouns (and must come
 ;;; last) 
-(receive (options operands)
-    (args:parse (command-line-arguments) opts)
-  (handle-exceptions exn (usage) (main)))
+;; (receive (options operands)
+;;     (args:parse (command-line-arguments) opts)
+;;   (handle-exceptions exn (usage) (main)))
+(define options)
+(define operands)
+(define keep?)
+(define display-fields? #f)
+
+(set!-values (options operands)
+	     (args:parse (command-line-arguments) opts))
+
+;;(handle-exceptions exn (usage) (main))
+(main)
 
