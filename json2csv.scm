@@ -63,8 +63,8 @@
 			  (print-fields))
 	(args:make-option (k keep)   #:none "Data fields to keep"
 			  (keep-fields))
-	;; (args:make-option (r remove)   #:none "Data fields to remove"
-	;; 		  (remove-fields))
+	(args:make-option (r remove)   #:none "Data fields to remove"
+			  (remove-fields))
 	))
 
 ;;; This procedure is called whenever the user specifies the help
@@ -177,10 +177,14 @@
 ;;; This is the procedure to call
 ;; (define (nested-alist-keys alist)
 ;;   (let ((keys (get-nested-alist-keys alist)))
-;;     (map (lambda (x) (nested-keys-parser x)) keys)))
-(define (nested-alist-keys alist)
-  (let ((keys (get-nested-alist-keys alist)))
-    (join (map paths-to-leaves keys))))
+;;     (join (map paths-to-leaves keys))))
+(define (nested-alist-keys alist #!key (flds #f) (keep? #f))
+  (let* ((raw-keys (get-nested-alist-keys alist))
+	 (keys (join (map paths-to-leaves raw-keys))))
+    (cond
+     [(null? flds) keys]
+     [keep? (lset-intersection eq? flds keys)]
+     [else (lset-difference eq? keys flds)])))
 
 ;;; Grab the value of a key from a nested alist
 (define (nested-alist-ref keys nested-alist)
@@ -230,27 +234,29 @@
 	    records))
 
 ;;; This gets the work done
-;;; My original version
-;; (define (json->csv in-file out-file)
+;; (define (json->csv in-file out-file #!key (flds #f) (keep? #f))
 ;;   (let ((keys (with-input-from-file in-file
 ;; 		(lambda ()
-;; 		  (non-nested-keys (read-json (read-line)))))))
+;; 		  (non-nested-keys (read-json (read-line)) #:flds
+;; 				   flds #:keep? keep?)))))
 ;;     (with-output-to-file out-file
 ;;       (lambda ()
-;; 	(write-csv (list keys))
-;; 	(with-input-from-file in-file
-;; 	  (lambda ()
-;; 	    (do ((line (read-line) (read-line)))
-;; 		((eof-object? line))
-;; 	      (write-csv (list (alist->nested-list (read-json line) keys))))))))))
-
-;;; A version adapted from code from DerGuteMoritz on freenode:
-;;; http://paste.call-cc.org/paste?id=5cdd1a889dd48dec9267f488d0cdac9ce94e8f9e
+;; 	;; Write the csv header
+;; 	;; (write-csv (list keys))
+;; 	(write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
+;; 	(call-with-input-file in-file
+;; 	  (lambda (in)
+;; 	    (let loop ((in in))
+;; 	      (receive (object remainder)
+;; 		  (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
+;; 		(when object
+;; 		  (write-csv (list (alist->nested-list object keys)))
+;; 		  (loop remainder))))))))))
 (define (json->csv in-file out-file #!key (flds #f) (keep? #f))
   (let ((keys (with-input-from-file in-file
 		(lambda ()
-		  (non-nested-keys (read-json (read-line)) #:flds
-				   flds #:keep? keep?)))))
+		  (nested-alist-keys (read-json (read-line)) #:flds
+				     flds #:keep? keep?)))))
     (with-output-to-file out-file
       (lambda ()
 	;; Write the csv header
