@@ -221,24 +221,40 @@
 	    records))
 
 ;;; This gets the work done
-(define (json->csv in-file out-file #!key (flds #f) (keep? #f))
+;; (define (json->csv in-file out-file #!key (flds #f) (keep? #f))
+;;   (let ((keys (with-input-from-file in-file
+;; 		(lambda ()
+;; 		  (nested-alist-keys (read-json (read-line)) #:flds
+;; 				     flds #:keep? keep?)))))
+;;     (with-output-to-file out-file
+;;       (lambda ()
+;; 	;; Write the csv header
+;; 	;; (write-csv (list keys))
+;; 	(write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
+;; 	(call-with-input-file in-file
+;; 	  (lambda (in)
+;; 	    (let loop ((in in))
+;; 	      (receive (object remainder)
+;; 		  (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
+;; 		(when object
+;; 		  (write-csv (list (alist->nested-list object keys)))
+;; 		  (loop remainder))))))))))
+(define (json->csv in-file #!key (flds #f) (keep? #f))
   (let ((keys (with-input-from-file in-file
 		(lambda ()
 		  (nested-alist-keys (read-json (read-line)) #:flds
 				     flds #:keep? keep?)))))
-    (with-output-to-file out-file
-      (lambda ()
-	;; Write the csv header
-	;; (write-csv (list keys))
-	(write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
-	(call-with-input-file in-file
-	  (lambda (in)
-	    (let loop ((in in))
-	      (receive (object remainder)
-		  (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
-		(when object
-		  (write-csv (list (alist->nested-list object keys)))
-		  (loop remainder))))))))))
+    ;; Write the csv header
+    ;; (write-csv (list keys))
+    (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
+    (call-with-input-file in-file
+      (lambda (in)
+	(let loop ((in in))
+	  (receive (object remainder)
+	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
+	    (when object
+	      (write-csv (list (alist->nested-list object keys)))
+	      (loop remainder))))))))
 
 ;;; Print available json fields (including nested fields)
 (define (print-fields)
@@ -258,6 +274,26 @@
 						(read-line)))))))
 	  (exit 0)))))
 
+;; (define (task-dispatch #!optional keep?)
+;;   (let ((myargs (list-operands (command-line-arguments))))
+;;     (if (null? myargs)
+;;     	(usage)
+;;     	(let* ((in-file (car myargs))
+;; 	       (out-file (pathname-replace-extension in-file "csv"))
+;; 	       (field-args (nested-string->symbol (map (lambda (x)
+;; 							 (string-split x ":")) (cdr myargs)))))
+;;     	  (if (not (file-exists? in-file))
+;; 	      (begin (print (string-append "Abort: Cannot find file " in-file))
+;; 		     (exit 1))
+;; 	      (if (file-exists? out-file)
+;; 		  (begin (print (string-append "Abort: Output file " in-file
+;; 					       " already exists!"))
+;; 			 (exit 1))
+;; 		  ;; If we've made it here, things are good to
+;; 		  ;; go. Start processing the file
+;; 		  (json->csv in-file out-file #:flds field-args
+;; 			     #:keep? keep?)))))
+;;     (exit 0)))
 (define (task-dispatch #!optional keep?)
   (let ((myargs (list-operands (command-line-arguments))))
     (if (null? myargs)
@@ -275,8 +311,10 @@
 			 (exit 1))
 		  ;; If we've made it here, things are good to
 		  ;; go. Start processing the file
-		  (json->csv in-file out-file #:flds field-args
-			     #:keep? keep?)))))
+		  (with-output-to-file out-file
+		    (lambda ()
+		      (json->csv in-file #:flds field-args
+				 #:keep? keep?)))))))
     (exit 0)))
 
 
