@@ -265,8 +265,7 @@
 		  (write-csv (list (alist->nested-list object keys)))
 		  (loop remainder))))))))))
 
-
-
+;;; Print available json fields (including nested fields)
 (define (print-fields)
   (let ((myargs (list-operands (command-line-arguments))))
     (if (null? myargs)
@@ -277,9 +276,11 @@
 		     (exit 1))
 	      (with-input-from-file in-file
 		(lambda ()
-		  (for-each (lambda (x) (print x))
-			    (non-nested-keys (read-json
-					      (read-line)))))))
+		  (for-each
+		   (lambda (x)
+		     (print (string-join (map symbol->string x) ":")))
+			    (nested-alist-keys (read-json
+						(read-line)))))))
 	  (exit 0)))))
 
 (define (task-dispatch #!optional keep?)
