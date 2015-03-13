@@ -55,14 +55,16 @@
 ;;; following equivalent options available at runtime: -h, -help, --h,
 ;;; --help. These are used by the "args" egg.
 (define opts
-  (list (args:make-option (h help)   #:none "Help information"
+  (list (args:make-option (h help)    #:none "Help information"
 			  (usage))
-	(args:make-option (i input)  #:none  "Input file")
-	(args:make-option (l list)   #:none "List available data fields"
+	(args:make-option (i input)   #:none  "Input file")
+	(args:make-option (o output)  #:none  "Output file"
+			  (set! out-to-file? #t))
+	(args:make-option (l list)    #:none "List available data fields"
 			  (set! display-fields? #t))
-	(args:make-option (k keep)   #:none "Data fields to keep"
+	(args:make-option (k keep)    #:none "Data fields to keep"
 			  (set! keep? #t))
-	(args:make-option (r remove)   #:none "Data fields to remove"
+	(args:make-option (r remove)  #:none "Data fields to remove"
 			  (set! keep? #f))
 	))
 
@@ -174,7 +176,7 @@
 
 ;;; Grab the value of a key from a nested alist
 (define (nested-alist-ref keys nested-alist)
-  (cond ((or (not (cdr keys)) (null? (cdr keys)))
+  (cond ((null? (cdr keys))
 	 (alist-ref (car keys) nested-alist))
 	(else (nested-alist-ref (cdr keys) (alist-ref (car keys) nested-alist)))))
 
@@ -222,10 +224,16 @@
 
 ;;; This gets the work done
 (define (json->csv in-file #!key (flds #f) (keep? #f))
+  ;; DEBUG
+  ;; (print flds)
+  ;; (print keep?)
+  ;; (exit 0)
+
   (let ((keys (with-input-from-file in-file
 		(lambda ()
 		  (nested-alist-keys (read-json (read-line)) #:flds
 				     flds #:keep? keep?)))))
+    
     ;; Write the csv header
     ;; (write-csv (list keys))
     (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
@@ -287,24 +295,27 @@
     ;; DEBUG
     ;; (print in-file)
     ;; (print out-file)
-    ;; (print field-args)
+    ;; (print (null? field-args))
     ;; (exit 0)
 
     (if display-fields? (print-fields))
 
-    (if (not (file-exists? in-file))
-	(begin (print (string-append "Abort: Cannot find file " in-file))
-	       (exit 1))
-	(if (file-exists? out-file)
-	    (begin (print (string-append "Abort: Output file " in-file
-					 " already exists!"))
-		   (exit 1))
-	    ;; If we've made it here, things are good to
-	    ;; go. Start processing the file
-	    (with-output-to-file out-file
-	      (lambda ()
-		(json->csv in-file #:flds field-args
-			   #:keep? keep?))))))
+    (cond
+     [out-to-file?
+      (if (not (file-exists? in-file))
+	  (begin (print (string-append "Abort: Cannot find file " in-file))
+		 (exit 1))
+	  (if (file-exists? out-file)
+	      (begin (print (string-append "Abort: Output file " in-file
+					   " already exists!"))
+		     (exit 1))
+	      ;; If we've made it here, things are good to
+	      ;; go. Start processing the file
+	      (with-output-to-file out-file
+		(lambda ()
+		  (json->csv in-file #:flds field-args
+			     #:keep? keep?)))))]
+     [(json->csv in-file #:flds field-args #:keep? keep?)]))
   (exit 0))
 
 
@@ -333,6 +344,7 @@
 (define operands)
 (define keep?)
 (define display-fields? #f)
+(define out-to-file? #f)
 
 (set!-values (options operands)
 	     (args:parse (command-line-arguments) opts))
