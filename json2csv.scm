@@ -223,99 +223,157 @@
 	    records))
 
 ;;; This gets the work done
-(define (json->csv in-file #!key (flds #f) (keep? #f))
-  ;; DEBUG
-  ;; (print flds)
-  ;; (print keep?)
-  ;; (exit 0)
+;; (define (json->csv in-file #!key (flds #f) (keep? #f))
+;;   ;; DEBUG
+;;   ;; (print flds)
+;;   ;; (print keep?)
+;;   ;; (exit 0)
 
-  (let ((keys (with-input-from-file in-file
-		(lambda ()
-		  (nested-alist-keys (read-json (read-line)) #:flds
-				     flds #:keep? keep?)))))
+;;   (let ((keys (with-input-from-file in-file
+;; 		(lambda ()
+;; 		  (nested-alist-keys (read-json (read-line)) #:flds
+;; 				     flds #:keep? keep?)))))
+    
+;;     ;; Write the csv header
+;;     ;; (write-csv (list keys))
+;;     (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
+;;     (call-with-input-file in-file
+;;       (lambda (in)
+;; 	(let loop ((in in))
+;; 	  (receive (object remainder)
+;; 	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
+;; 	    (when object
+;; 	      (write-csv (list (alist->nested-list object keys)))
+;; 	      (loop remainder))))))))
+(define (json->csv in-file #!key (flds #f) (keep? #f))
+  (let ((keys (nested-alist-keys (read-json (read-line)) #:flds
+				 flds #:keep? keep?)))
     
     ;; Write the csv header
     ;; (write-csv (list keys))
     (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
-    (call-with-input-file in-file
-      (lambda (in)
-	(let loop ((in in))
-	  (receive (object remainder)
-	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
-	    (when object
-	      (write-csv (list (alist->nested-list object keys)))
-	      (loop remainder))))))))
+    
+    (let loop ((in (current-input-port)))
+      (receive (object remainder)
+	  (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
+	(when object
+	  (write-csv (list (alist->nested-list object keys)))
+	  (loop remainder))))))
 
 ;;; Print available json fields (including nested fields)
-(define (print-fields)
-  (let ((in-file (alist-ref 'input options)))
-    (if (not (file-exists? in-file))
-	(begin (print (string-append "Abort: Cannot find file " in-file))
-	       (exit 1))
-	(with-input-from-file in-file
-	  (lambda ()
-	    (for-each
-	     (lambda (x)
-	       (print (string-join (map symbol->string x) ":")))
-	     (nested-alist-keys (read-json
-				 (read-line)))))))
-    (exit 0)))
-
-;; (define (task-dispatch #!optional keep?)
-;;   (let ((myargs (list-operands (command-line-arguments))))
-;;     (if (null? myargs)
-;;     	(usage)
-;;     	(let* ((in-file (car myargs))
-;; 	       (out-file (pathname-replace-extension in-file "csv"))
-;; 	       (field-args (nested-string->symbol (map (lambda (x)
-;; 							 (string-split x ":")) (cdr myargs)))))
-;;     	  (if (not (file-exists? in-file))
-;; 	      (begin (print (string-append "Abort: Cannot find file " in-file))
-;; 		     (exit 1))
-;; 	      (if (file-exists? out-file)
-;; 		  (begin (print (string-append "Abort: Output file " in-file
-;; 					       " already exists!"))
-;; 			 (exit 1))
-;; 		  ;; If we've made it here, things are good to
-;; 		  ;; go. Start processing the file
-;; 		  (with-output-to-file out-file
-;; 		    (lambda ()
-;; 		      (json->csv in-file #:flds field-args
-;; 				 #:keep? keep?)))))))
+;; (define (print-fields)
+;;   (let ((in-file (alist-ref 'input options)))
+;;     (if (not (file-exists? in-file))
+;; 	(begin (print (string-append "Abort: Cannot find file " in-file))
+;; 	       (exit 1))
+;; 	(with-input-from-file in-file
+;; 	  (lambda ()
+;; 	    (for-each
+;; 	     (lambda (x)
+;; 	       (print (string-join (map symbol->string x) ":")))
+;; 	     (nested-alist-keys (read-json
+;; 				 (read-line)))))))
 ;;     (exit 0)))
+(define (print-fields)
+  (for-each
+   (lambda (x)
+     (print (string-join (map symbol->string x) ":")))
+   (nested-alist-keys (read-json
+		       (read-line))))
+  (exit 0))
+
+;; (define (task-dispatch #!optional keep)
+;;   (let* ((in-file (alist-ref 'input options))
+;; 	 (out-file
+;; 	  (if in-file
+;; 	      (pathname-replace-extension in-file "csv")
+;; 	      #f))
+;; 	 (field-args (nested-string->symbol
+;; 		      (map (lambda (x) (string-split x ":"))
+;; 			   operands))))
+
+;;     (if display-fields? (print-fields))
+
+;;     (cond
+;;      [out-to-file?
+;;       (if (not (file-exists? in-file))
+;; 	  (begin (print (string-append "Abort: Cannot find file " in-file))
+;; 		 (exit 1))
+;; 	  (if (file-exists? out-file)
+;; 	      (begin (print (string-append "Abort: Output file " in-file
+;; 					   " already exists!"))
+;; 		     (exit 1))
+;; 	      ;; If we've made it here, things are good to
+;; 	      ;; go. Start processing the file
+;; 	      (with-output-to-file out-file
+;; 		(lambda ()
+;; 		  (json->csv in-file #:flds field-args
+;; 			     #:keep? keep?)))))]
+;;      [(json->csv in-file #:flds field-args #:keep? keep?)]))
+;;   (exit 0))
 (define (task-dispatch #!optional keep)
   (let* ((in-file (alist-ref 'input options))
-	 (out-file
-	  (if in-file
-	      (pathname-replace-extension in-file "csv")
-	      #f))
+	 (out-file (alist-ref 'output options))
 	 (field-args (nested-string->symbol
 		      (map (lambda (x) (string-split x ":"))
 			   operands))))
-    ;; DEBUG
-    ;; (print in-file)
-    ;; (print out-file)
-    ;; (print (null? field-args))
-    ;; (exit 0)
-
-    (if display-fields? (print-fields))
 
     (cond
-     [out-to-file?
-      (if (not (file-exists? in-file))
-	  (begin (print (string-append "Abort: Cannot find file " in-file))
-		 (exit 1))
-	  (if (file-exists? out-file)
-	      (begin (print (string-append "Abort: Output file " in-file
-					   " already exists!"))
-		     (exit 1))
-	      ;; If we've made it here, things are good to
-	      ;; go. Start processing the file
-	      (with-output-to-file out-file
-		(lambda ()
-		  (json->csv in-file #:flds field-args
-			     #:keep? keep?)))))]
-     [(json->csv in-file #:flds field-args #:keep? keep?)]))
+     ;; User has supplied an input file name. Read from disk
+     [in-file
+      (begin
+	(if (not (file-exists? in-file))
+	     (begin (print (string-append "Abort: Cannot find file " in-file))
+		    (exit 1)))
+
+	(with-input-from-file in-file
+	  (lambda ()
+	    
+	    (cond
+	     [out-to-file?
+	      (begin
+		(if (file-exists? out-file)
+		    (begin (print (string-append "Abort: Output file " out-file
+						 " already exists!"))
+			   (exit 1))
+		    ;; If we've made it here, things are good to
+		    ;; go. Start processing the data
+		    (with-output-to-file out-file
+		      (lambda ()
+			;; User want to see available fields? Print and exit
+			(if display-fields? (print-fields))
+
+			(json->csv in-file #:flds field-args
+				   #:keep? keep?)))))]
+	     ;; User does NOT want to write to disk. Write to stdout
+	     [else (begin
+		     ;; User want to see available fields? Print and exit
+		     (if display-fields? (print-fields))
+		     
+		     (json->csv in-file #:flds field-args #:keep? keep?))]))))]
+     ;; No input file was supplied. Read from stdin 
+     [else
+      (begin
+	(with-input-from-port (current-input-port)
+	  (lambda ()
+	    ;; User want to see available fields? Print and exit
+	    (if display-fields? (print-fields))
+	    
+	    (cond
+	     [out-to-file?
+	      (begin
+		(if (file-exists? out-file)
+		    (begin (print (string-append "Abort: Output file " out-file
+						 " already exists!"))
+			   (exit 1))
+		    ;; If we've made it here, things are good to
+		    ;; go. Start processing the file
+		    (with-output-to-file out-file
+		      (lambda ()
+			(json->csv in-file #:flds field-args
+				   #:keep? keep?)))))]
+	     ;; User does NOT want to write to disk. Write to stdout
+	     [else (json->csv in-file #:flds field-args #:keep? keep?)]))))]))
   (exit 0))
 
 
