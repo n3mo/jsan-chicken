@@ -5,7 +5,7 @@
 
 ;; Author: Nicholas M. Van Horn <vanhorn.nm@gmail.com>
 ;; Keywords: json csv convert conversion cli terminal command line
-;; Version: 1.0.1
+;; Version: 1.1.0
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,6 +32,8 @@
 ;;; see the github page for this program at
 ;;; https://github.com/n3mo/dvr 
 
+(define json2csv-version "1.1.0 (2015-03-13)")
+
 (require-extension args)
 (require-extension files)
 (require-extension srfi-13)
@@ -57,8 +59,8 @@
 (define opts
   (list (args:make-option (h help)    #:none "Help information"
 			  (usage))
-	(args:make-option (i input)   #:none  "Input file")
-	(args:make-option (o output)  #:none  "Output file"
+	(args:make-option (input)   (required: "FILE")  "Read from file")
+	(args:make-option (output)  (required: "FILE")  "Write to file"
 			  (set! out-to-file? #t))
 	(args:make-option (l list)    #:none "List available data fields"
 			  (set! display-fields? #t))
@@ -66,6 +68,9 @@
 			  (set! keep? #t))
 	(args:make-option (r remove)  #:none "Data fields to remove"
 			  (set! keep? #f))
+	(args:make-option (v version)  #:none "Version information"
+			  (print-version))
+
 	))
 
 ;;; This procedure is called whenever the user specifies the help
@@ -74,10 +79,20 @@
 (define (usage)
  (with-output-to-port (current-error-port)
    (lambda ()
-     (print "Usage: json2csv [file] [options...]")
+     (print "Usage: json2csv --input=FILE... [options...]")
      (newline)
      (print (args:usage opts))
-     (print "Converts json files to csv")
+     (print "Convert json FILE to csv. With no --input=FILE,")
+     (print "read standard input. Results are written to standard")
+     (print "output by default. Use --list to view available data")
+     (print "fields instead of converting. Nested fields will be listed")
+     (print "as parent:child. These fields can be used with options")
+     (print "--keep or --remove to only convert portions of the json")
+     (print "data. For example, to keep only the fields \"timestamp\"")
+     (print "and \"user:name\" in the file \"file.json\":")
+     (newline)
+     (print "json2csv --input=file.json --keep timestamp user:name")
+     (newline)
      (print "Report bugs to nemo1211 at gmail.")))
  (exit 1))
 
@@ -89,6 +104,16 @@
    ((string-prefix? "-" (car myargs))
     (list-operands (cdr myargs)))
    (else (cons (car myargs) (list-operands (cdr myargs))))))
+
+(define (print-version)
+  (print "json2csv " json2csv-version)
+  (print "https://github.com/n3mo/json2csv")
+  (newline)
+  (print "Copyright (C) 2015 Nicholas M. Van Horn")
+  (print "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.")
+  (print "This is free software: you are free to change and redistribute it.")
+  (print "There is NO WARRANTY, to the extent permitted by law.")
+  (exit 0))
 
 ;;; Return keys from alist that do not correspond to values that are
 ;;; lists themselves. This provides a mechanism for removing nested
@@ -407,6 +432,6 @@
 (set!-values (options operands)
 	     (args:parse (command-line-arguments) opts))
 
-;;(handle-exceptions exn (usage) (main))
-(main)
+(handle-exceptions exn (usage) (main))
+
 
