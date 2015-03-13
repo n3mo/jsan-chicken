@@ -104,24 +104,6 @@
 ;;       [keep? (lset-intersection eq? flds keys)]
 ;;       [else (lset-difference eq? keys flds)])))
 
-;;; TODO: The version above used to only keep fields requested by the
-;;; user that actually appear in the JSON file. I have temporarily
-;;; removed that and allow the user to request any field, ficticious
-;;; or not. This was done to allow fetching of nested JSON lists. I
-;;; would like to revisit this once I have the procedure
-;;; nested-alist-keys working properly
-(define (non-nested-keys alist #!key (flds #f) (keep? #f))
-  (let ([keys (remove null? 
-                      (map (lambda (apair)
-                             (if (not (list? (cdr apair)))
-                               (list (car apair))
-                               '()))
-                           alist))])
-    (cond
-      [(null? flds) keys]
-      [keep? flds]
-      [else keys])))
-
 ;;; -----------------------------------------------------------------
 ;;; Code for finding nested alist keys
 ;;; -----------------------------------------------------------------
@@ -147,6 +129,11 @@
           (mapcan (lambda (child)
                     (paths-to-leaves child path-to-tree))
                   (tree-children tree)))))
+
+;;; Consider a tree structure bar, view each function's behavior with:
+;; (map (lambda (tree) (display (list
+;;       (tree-leaf? tree) (tree-label tree) (tree-children tree))) (newline))
+;;       bar)
 
 ;;; Recursively find keys in a potentially-nested alist
 (define (build-nested-key alist key)
@@ -183,8 +170,8 @@
 	 (keys (join (map paths-to-leaves raw-keys))))
     (cond
      [(null? flds) keys]
-     [keep? (lset-intersection eq? flds keys)]
-     [else (lset-difference eq? keys flds)])))
+     [keep? (lset-intersection equal? flds keys)]
+     [else (lset-difference equal? keys flds)])))
 
 ;;; Grab the value of a key from a nested alist
 (define (nested-alist-ref keys nested-alist)
@@ -234,24 +221,6 @@
 	    records))
 
 ;;; This gets the work done
-;; (define (json->csv in-file out-file #!key (flds #f) (keep? #f))
-;;   (let ((keys (with-input-from-file in-file
-;; 		(lambda ()
-;; 		  (non-nested-keys (read-json (read-line)) #:flds
-;; 				   flds #:keep? keep?)))))
-;;     (with-output-to-file out-file
-;;       (lambda ()
-;; 	;; Write the csv header
-;; 	;; (write-csv (list keys))
-;; 	(write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
-;; 	(call-with-input-file in-file
-;; 	  (lambda (in)
-;; 	    (let loop ((in in))
-;; 	      (receive (object remainder)
-;; 		  (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
-;; 		(when object
-;; 		  (write-csv (list (alist->nested-list object keys)))
-;; 		  (loop remainder))))))))))
 (define (json->csv in-file out-file #!key (flds #f) (keep? #f))
   (let ((keys (with-input-from-file in-file
 		(lambda ()
