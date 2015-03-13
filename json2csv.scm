@@ -122,28 +122,33 @@
       [keep? flds]
       [else keys])))
 
+;;; -----------------------------------------------------------------
+;;; Code for finding nested alist keys
+;;; -----------------------------------------------------------------
+
+(define (tree-label    tree) (if (pair? (car tree))
+                                 (caar tree)
+                                 (car tree)))
+(define (tree-children tree) (cdr tree))
+(define (tree-leaf?    tree) (null? (cdr tree)))
+
+(define (mapcan fun list)
+  (if (null? list)
+      '()
+      (append (fun (car list)) (mapcan fun (cdr list)))))
+
+(define (paths-to-leaves tree . rest)
+    (let* ((path (if (null? rest)
+                     '()
+                     (car rest)))
+           (path-to-tree (append path (list (tree-label tree)))))
+      (if (tree-leaf? tree)
+          (list path-to-tree)
+          (mapcan (lambda (child)
+                    (paths-to-leaves child path-to-tree))
+                  (tree-children tree)))))
+
 ;;; Recursively find keys in a potentially-nested alist
-;; (define (nested-alist-keys alist)
-;;   (cond [(null? alist) '()]
-;; 	[(not (dotted-list? (cdr (car alist))))
-;; 	 (cons (car (car alist)) (nested-alist-keys (cdr alist)))]
-;; 	[else (cons (nested-alist-keys (cdr (car alist)))
-;; 		    (nested-alist-keys (cdr alist)))]))
-;; (define (nested-alist-keys alist)
-;;   (cond [(null? alist) '()]
-;; 	[(not (list? (car alist)))
-;; 	 (nested-alist-keys (cdr alist))]
-;; 	[else (cons (nested-alist-keys (cdr (car alist)))
-;; 		    (nested-alist-keys (cdr alist)))]))
-
-
-
-;; (define (build-nested-key alist key)
-;;   (let ((myvalue (nested-alist-ref key alist)))
-;;     (if (not (list? myvalue))
-;; 	key
-;; 	(cons (nested-alist-keys (cdr myvalue))
-;; 	      (build-nested-key alist (cdr key))))))
 (define (build-nested-key alist key)
   (if (or (not (list? alist)) (not (list? key)))
       key
@@ -151,19 +156,31 @@
 	(if (not (list? myvalue))
 	    key
 	    (cons key
-		  (nested-alist-keys myvalue))))))
+		  (get-nested-alist-keys myvalue))))))
 
-;; (define (nested-alist-keys alist)
-;;   (if (not (list? alist))
-;;       '()
-;;       (let ((keys (map (lambda (x) (list (car x))) alist)))
-;; 	(map (lambda (x) (build-nested-key alist x)) keys))))
-(define (nested-alist-keys alist)
+(define (get-nested-alist-keys alist)
   (if (not (list? alist))
       '()
       (let ((keys (map
 		   (lambda (x) (list (car x))) alist)))
 	(map (lambda (x) (build-nested-key alist x)) keys))))
+
+;; (define (nested-keys-parser family)
+;;   (cond [(null? family) '()]
+;; 	[(list? (car family))
+;; 	 (cons (car (car family))
+;; 	       (nested-keys-parser (cdr (car family))))]
+;; 	[else (cons (car family)
+;; 		    (nested-keys-parser (cdr family)))]))
+
+
+;;; This is the procedure to call
+;; (define (nested-alist-keys alist)
+;;   (let ((keys (get-nested-alist-keys alist)))
+;;     (map (lambda (x) (nested-keys-parser x)) keys)))
+(define (nested-alist-keys alist)
+  (let ((keys (get-nested-alist-keys alist)))
+    (join (map paths-to-leaves keys))))
 
 ;;; Grab the value of a key from a nested alist
 (define (nested-alist-ref keys nested-alist)
