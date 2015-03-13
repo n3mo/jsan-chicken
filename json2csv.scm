@@ -41,9 +41,14 @@
 ;;; To provide consistent access to JSON elements, we turn JSON arrays
 ;;; to lists instead of vectors (code taken from medea egg example)
 ;; Parsing JSON arrays as lists instead of vectors
-(define array-as-list-parser
-  (cons 'array (lambda (x) x)))
-(json-parsers (cons array-as-list-parser (json-parsers)))
+;; (define array-as-list-parser
+;;   (cons 'array (lambda (x) x)))
+;; (json-parsers (cons array-as-list-parser (json-parsers)))
+
+;;; Version with list flattening
+;; (define array-as-list-parser
+;;   (cons 'array (lambda (x) (flatten x))))
+;; (json-parsers (cons array-as-list-parser (json-parsers)))
 
 ;;; The following list contains all defined command line options
 ;;; available to the user. For example, (h help) makes all of the
@@ -124,6 +129,41 @@
 ;; 	 (cons (car (car alist)) (nested-alist-keys (cdr alist)))]
 ;; 	[else (cons (nested-alist-keys (cdr (car alist)))
 ;; 		    (nested-alist-keys (cdr alist)))]))
+;; (define (nested-alist-keys alist)
+;;   (cond [(null? alist) '()]
+;; 	[(not (list? (car alist)))
+;; 	 (nested-alist-keys (cdr alist))]
+;; 	[else (cons (nested-alist-keys (cdr (car alist)))
+;; 		    (nested-alist-keys (cdr alist)))]))
+
+
+
+;; (define (build-nested-key alist key)
+;;   (let ((myvalue (nested-alist-ref key alist)))
+;;     (if (not (list? myvalue))
+;; 	key
+;; 	(cons (nested-alist-keys (cdr myvalue))
+;; 	      (build-nested-key alist (cdr key))))))
+(define (build-nested-key alist key)
+  (if (or (not (list? alist)) (not (list? key)))
+      key
+      (let ((myvalue (alist-ref (car key) alist)))
+	(if (not (list? myvalue))
+	    key
+	    (cons key
+		  (nested-alist-keys myvalue))))))
+
+;; (define (nested-alist-keys alist)
+;;   (if (not (list? alist))
+;;       '()
+;;       (let ((keys (map (lambda (x) (list (car x))) alist)))
+;; 	(map (lambda (x) (build-nested-key alist x)) keys))))
+(define (nested-alist-keys alist)
+  (if (not (list? alist))
+      '()
+      (let ((keys (map
+		   (lambda (x) (list (car x))) alist)))
+	(map (lambda (x) (build-nested-key alist x)) keys))))
 
 ;;; Grab the value of a key from a nested alist
 (define (nested-alist-ref keys nested-alist)
