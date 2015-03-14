@@ -1,13 +1,11 @@
 # json2csv
 Convert (and subset) json files to csv from the command line
 
-`json2csv` converts a json stream (from file or standard input) to a comma separated values (csv) file. Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large json files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting csv file. This filtering, and the loss of redundancy can dramatically reduce file size asl well. For example, `json2csv` reduced a 5.6GB file of Twitter data in json format to a 158MB csv file.
+`json2csv` converts a json stream (from file or standard input) to a comma separated values (csv) file. Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large json files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting csv file. This filtering, and the loss of redundancy can dramatically reduce file size as well. For example, `json2csv` reduced a 5.6GB file of Twitter data in json format to a 158MB csv file.
 
-Because `json2csv` can also write to standard output (in addition to writing to file), it can also serve as a useful exploration tool for quickly exploring json data (e.g., pulling user names across all entries). Output can be piped to other common command line tools (e.g., awk) as in traditial unix-like workflows.
+Because `json2csv` can also write to standard output (in addition to writing to file), it can also serve as a useful exploration tool for quickly exploring json data (e.g., pulling user names across all entries). Output can be piped to other common command line tools (e.g., awk) as in traditional unix-like workflows.
 
 ## Usage
-
-Assuming conversion of a file called `mydata.json`, the following commands will create a csv file called `mydata.csv`.
 
 **For usage help:**
 
@@ -47,10 +45,29 @@ Assuming conversion of a file called `mydata.json`, the following commands will 
 
 ## Installation
 
-### Install json2csv
+A [self-contained binary package](http://www.nicholasvanhorn.com/software/json2csv.zip) has been pre-built for x86_64 Linux systems. This binary was built on Arch Linux (3.18.6) and should work on similar systems (it has also been tested to work on Ubuntu 12.04).
+
+1. Download the [zipped package](http://www.nicholasvanhorn.com/software/json2csv.zip)
+2. Unzip it in a destination folder of your choice
+
+```sh
+unzip json2csv.zip
+cd json2csv
+```
+
+3. An executable named json2csv is located in the newly created folder "json2csv". You can run this file directly with `./json2csv`
+4. Better yet, make a symbolic link to the executable somewhere on your path. Assuming ~/bin/ is on your path:
+
+```sh
+ln -s ~/path/to/json2csv ~/bin/json2csv
+```
+
+Now you can call `json2csv` from within any directory.
+
+### Manual Build
 
 #### Prerequisites
-Currently, this software is not bundled as a self-contained package. Thus, you will need [Chicken Scheme](http://www.call-cc.org/) installed on your system. This software was developed and tested on Chicken 4.9.0. Your mileage may vary on other versions. 
+To build json2csv from source, you will need [Chicken Scheme](http://www.call-cc.org/) installed on your system. This software was developed and tested on Chicken 4.9.0. Your mileage may vary on other versions. 
 
 Additionally, you will need the following [Eggs](http://wiki.call-cc.org/eggs) installed:
 * medea
