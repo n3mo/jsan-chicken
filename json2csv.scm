@@ -115,21 +115,6 @@
   (print "There is NO WARRANTY, to the extent permitted by law.")
   (exit 0))
 
-;;; Return keys from alist that do not correspond to values that are
-;;; lists themselves. This provides a mechanism for removing nested
-;;; json entries (the easy solution for now)
-;; (define (non-nested-keys alist #!key (flds #f) (keep? #f))
-;;   (let ([keys (remove null? 
-;;                       (map (lambda (apair)
-;;                              (if (not (list? (cdr apair)))
-;;                                (car apair)
-;;                                '()))
-;;                            alist))])
-;;     (cond
-;;       [(null? flds) keys]
-;;       [keep? (lset-intersection eq? flds keys)]
-;;       [else (lset-difference eq? keys flds)])))
-
 ;;; -----------------------------------------------------------------
 ;;; Code for finding nested alist keys
 ;;; -----------------------------------------------------------------
@@ -178,19 +163,7 @@
 		   (lambda (x) (list (car x))) alist)))
 	(map (lambda (x) (build-nested-key alist x)) keys))))
 
-;; (define (nested-keys-parser family)
-;;   (cond [(null? family) '()]
-;; 	[(list? (car family))
-;; 	 (cons (car (car family))
-;; 	       (nested-keys-parser (cdr (car family))))]
-;; 	[else (cons (car family)
-;; 		    (nested-keys-parser (cdr family)))]))
-
-
 ;;; This is the procedure to call
-;; (define (nested-alist-keys alist)
-;;   (let ((keys (get-nested-alist-keys alist)))
-;;     (join (map paths-to-leaves keys))))
 (define (nested-alist-keys alist #!key (flds #f) (keep? #f))
   (let* ((raw-keys (get-nested-alist-keys alist))
 	 (keys (join (map paths-to-leaves raw-keys))))
@@ -200,10 +173,24 @@
      [else (lset-difference equal? keys flds)])))
 
 ;;; Grab the value of a key from a nested alist
+;; (define (nested-alist-ref keys nested-alist)
+;;   (cond ((null? (cdr keys))
+;; 	 (alist-ref (car keys) nested-alist eqv? 'null))
+;; 	(else
+;; 	 (nested-alist-ref (cdr keys) (alist-ref (car keys)
+;; 						 nested-alist eqv? 'null)))))
 (define (nested-alist-ref keys nested-alist)
-  (cond ((null? (cdr keys))
-	 (alist-ref (car keys) nested-alist))
-	(else (nested-alist-ref (cdr keys) (alist-ref (car keys) nested-alist)))))
+  (let ((myvalue (alist-ref (car keys) nested-alist)))
+    (if myvalue
+	(cond ([null? (cdr keys)]
+	       (alist-ref (car keys) nested-alist eqv? 'null))
+	      [else
+	       (nested-alist-ref (cdr keys) (alist-ref (car keys)
+						       nested-alist
+						       eqv? 'null))])
+	;; Else: a malformed json entry on this line. Return null
+	;; (which gets converted (to NA as of 2015-03-13)
+	'null)))
 
 ;;; Same as string->symbol, but works for a list of lists (of strings)
 (define (nested-string->symbol lists)
@@ -213,9 +200,6 @@
 
 ;;; Make a list of lists out of an alist. This will be used for
 ;;; preparing the data for writing to csv file.
-;; (define (alist->nested-list alist keys)
-;;   (map
-;;    (lambda (curr-key) (alist-ref curr-key alist)) keys))
 (define (alist->nested-list alist keys)
   (map
    (lambda (curr-key) (nested-alist-ref curr-key alist)) keys))
@@ -248,28 +232,6 @@
 	    records))
 
 ;;; This gets the work done
-;; (define (json->csv in-file #!key (flds #f) (keep? #f))
-;;   ;; DEBUG
-;;   ;; (print flds)
-;;   ;; (print keep?)
-;;   ;; (exit 0)
-
-;;   (let ((keys (with-input-from-file in-file
-;; 		(lambda ()
-;; 		  (nested-alist-keys (read-json (read-line)) #:flds
-;; 				     flds #:keep? keep?)))))
-    
-;;     ;; Write the csv header
-;;     ;; (write-csv (list keys))
-;;     (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
-;;     (call-with-input-file in-file
-;;       (lambda (in)
-;; 	(let loop ((in in))
-;; 	  (receive (object remainder)
-;; 	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
-;; 	    (when object
-;; 	      (write-csv (list (alist->nested-list object keys)))
-;; 	      (loop remainder))))))))
 (define (json->csv in-file #!key (flds #f) (keep? #f))
   (let ((keys (nested-alist-keys (read-json (read-line)) #:flds
 				 flds #:keep? keep?)))
@@ -286,19 +248,6 @@
 	  (loop remainder))))))
 
 ;;; Print available json fields (including nested fields)
-;; (define (print-fields)
-;;   (let ((in-file (alist-ref 'input options)))
-;;     (if (not (file-exists? in-file))
-;; 	(begin (print (string-append "Abort: Cannot find file " in-file))
-;; 	       (exit 1))
-;; 	(with-input-from-file in-file
-;; 	  (lambda ()
-;; 	    (for-each
-;; 	     (lambda (x)
-;; 	       (print (string-join (map symbol->string x) ":")))
-;; 	     (nested-alist-keys (read-json
-;; 				 (read-line)))))))
-;;     (exit 0)))
 (define (print-fields)
   (for-each
    (lambda (x)
@@ -307,35 +256,8 @@
 		       (read-line))))
   (exit 0))
 
-;; (define (task-dispatch #!optional keep)
-;;   (let* ((in-file (alist-ref 'input options))
-;; 	 (out-file
-;; 	  (if in-file
-;; 	      (pathname-replace-extension in-file "csv")
-;; 	      #f))
-;; 	 (field-args (nested-string->symbol
-;; 		      (map (lambda (x) (string-split x ":"))
-;; 			   operands))))
-
-;;     (if display-fields? (print-fields))
-
-;;     (cond
-;;      [out-to-file?
-;;       (if (not (file-exists? in-file))
-;; 	  (begin (print (string-append "Abort: Cannot find file " in-file))
-;; 		 (exit 1))
-;; 	  (if (file-exists? out-file)
-;; 	      (begin (print (string-append "Abort: Output file " in-file
-;; 					   " already exists!"))
-;; 		     (exit 1))
-;; 	      ;; If we've made it here, things are good to
-;; 	      ;; go. Start processing the file
-;; 	      (with-output-to-file out-file
-;; 		(lambda ()
-;; 		  (json->csv in-file #:flds field-args
-;; 			     #:keep? keep?)))))]
-;;      [(json->csv in-file #:flds field-args #:keep? keep?)]))
-;;   (exit 0))
+;;; This decides how the program will run, calling whatever is
+;;; necessary according to the user's runtime options
 (define (task-dispatch #!optional keep)
   (let* ((in-file (alist-ref 'input options))
 	 (out-file (alist-ref 'output options))
@@ -401,17 +323,6 @@
 	     [else (json->csv in-file #:flds field-args #:keep? keep?)]))))]))
   (exit 0))
 
-
-
-;; (define (keep-fields)
-;;   (task-dispatch "keep")
-;;   (exit 1))
-
-;; (define (remove-fields)
-;;   (task-dispatch "remove")
-;;   (exit 1))
-
-
 ;;; Just what you think. This gets things done when you don't supply
 ;;; any command line options
 (define (main)
@@ -433,5 +344,7 @@
 	     (args:parse (command-line-arguments) opts))
 
 (handle-exceptions exn (usage) (main))
+
+
 
 
