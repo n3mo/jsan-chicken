@@ -1,7 +1,9 @@
 # json2csv
 Convert (and subset) json files to csv from the command line
 
-`json2csv` converts a json stream (from file) to a comma separated values (csv) file. Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large json files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting csv file. For example, by keeping only the most relevant data fields, `json2csv` reduced a 5.6GB file of Twitter data in json format to a 158MB csv file.
+`json2csv` converts a json stream (from file or standard input) to a comma separated values (csv) file. Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large json files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting csv file. This filtering, and the loss of redundancy can dramatically reduce file size asl well. For example, `json2csv` reduced a 5.6GB file of Twitter data in json format to a 158MB csv file.
+
+Because `json2csv` can also write to standard output (in addition to writing to file), it can also serve as a useful exploration tool for quickly exploring json data (e.g., pulling user names across all entries). Output can be piped to other common command line tools (e.g., awk) as in traditial unix-like workflows.
 
 ## Usage
 
@@ -11,25 +13,37 @@ Assuming conversion of a file called `mydata.json`, the following commands will 
 
     json2csv --help
 
-**To convert the file mydata.json to mydata.csv:**
+**To convert the file mydata.json to results.csv:**
 
-    json2csv mydata.json
+    json2csv --input=mydata.json --output=results.csv
 
 **To list available data fields in mydata.json:**
 
-    json2csv mydata.json --list
+    json2csv --input=mydata.json --list
 
-**To convert AND only keep the data fields "text" and "created_on":**
+**To convert AND only keep the data fields "text" and "created_on" while writing to standard output:**
 
-    json2csv mydata.json --keep text created_on
+    json2csv --input=mydata.json --keep text created_on
 
 **You can also remove named data fields. The following will keep all fields EXCEPT "email" and "phone":**
 
-    json2csv mydata.json --remove email phone
+    json2csv --input=mydata.json --remove email phone
 
 **Nested JSON data fields can be accessed by using a colon. To keep the fields user->screen_name and user->bio->address**
 
-    json2csv mydata.json --keep user:screen_name user:bio:address
+    json2csv --input=mydata.json --keep user:screen_name user:bio:address
+
+**Use pipes to use the output of other commands as input:**
+
+    cat mydata.json | json2csv
+
+**Combine and get creative. Let's list all users whose screen names start with "M":**
+
+    cat mydata.json | json2csv -k user:screen_name | grep '^"m'
+
+**Same as above, but dump the results into a file called names.txt**
+
+    cat mydata.json | json2csv -k user:screen_name | grep '^"m' > names.txt
 
 ## Installation
 
