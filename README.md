@@ -45,18 +45,18 @@ Because `json2csv` can also write to standard output (in addition to writing to 
 
 ## Installation
 
-A [self-contained binary package](http://www.nicholasvanhorn.com/software/json2csv.zip) has been pre-built for x86_64 Linux systems. This binary was built on Arch Linux (3.18.6) and should work on similar systems (it has also been tested to work on Ubuntu 12.04).
+A [self-contained binary package](http://www.nicholasvanhorn.com/software/json2csv.zip) has been pre-built for x86_64 Linux systems. This binary was built on Arch Linux (3.18.6) and should work on similar systems (it has also been tested to work on Ubuntu 12.04). For other systems you will need to build from source (see **Manual Build**).
 
-1. Download the [zipped package](http://www.nicholasvanhorn.com/software/json2csv.zip)
-2. Unzip it in a destination folder of your choice
+- Download the [zipped package](http://www.nicholasvanhorn.com/software/json2csv.zip)
+- Unzip it in a destination folder of your choice
 
 ```sh
 unzip json2csv.zip
 cd json2csv
 ```
 
-3. An executable named json2csv is located in the newly created folder "json2csv". You can run this file directly with `./json2csv`
-4. Better yet, make a symbolic link to the executable somewhere on your path. Assuming ~/bin/ is on your path:
+- An executable named json2csv is located in the newly created folder "json2csv". You can run this file directly with `./json2csv`
+- Better yet, make a symbolic link to the executable somewhere on your path. Assuming ~/bin/ is on your path:
 
 ```sh
 ln -s ~/path/to/json2csv ~/bin/json2csv
