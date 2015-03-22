@@ -1,7 +1,7 @@
 # json2csv
 Convert (and subset) json files to csv from the command line
 
-`json2csv` converts a json stream (from file or standard input) to a comma separated values (csv) file. Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large json files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting csv file. This filtering, and the loss of redundancy can dramatically reduce file size as well. For example, `json2csv` reduced a 5.6GB file of Twitter data in json format to a 158MB csv file.
+`json2csv` converts a json stream (from file or standard input) to a comma separated values (csv) file. Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large json files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting csv file. 
 
 Because `json2csv` can also write to standard output (in addition to writing to file), it can also serve as a useful exploration tool for quickly exploring json data (e.g., pulling user names across all entries). Output can be piped to other common command line tools (e.g., awk) as in traditional unix-like workflows.
 
@@ -42,6 +42,10 @@ Because `json2csv` can also write to standard output (in addition to writing to 
 **Same as above, but dump the results into a file called names.txt**
 
     cat mydata.json | json2csv -k user:screen_name | grep '^"m' > names.txt
+
+**The delimeter can optionally be set (default = ","):**
+
+    json2csv --delimeter=','
 
 ## Installation
 

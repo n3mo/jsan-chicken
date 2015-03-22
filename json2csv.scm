@@ -68,9 +68,11 @@
 			  (set! keep? #t))
 	(args:make-option (r remove)  #:none "Data fields to remove"
 			  (set! keep? #f))
+	(args:make-option (delimeter)  (required: "DELIM") "Field
+delimeter"
+			  (set! delimeter #f))
 	(args:make-option (v version)  #:none "Version information"
 			  (print-version))
-
 	))
 
 ;;; This procedure is called whenever the user specifies the help
@@ -217,6 +219,19 @@
 
 ;;; This writes a list of lists (record) to disk. This procedure
 ;;; writes to the current-output-port
+;; (define (write-csv records)
+;;   ;; Outer loop across rows
+;;   (for-each (lambda (row)
+;; 	      ;; Inner loop across columns
+;; 	      (let column-loop ((fields row))
+;; 		(if (null? fields)
+;; 		    (newline)
+;; 		    (let ((curr-field (format-csv-record (car fields)))
+;; 			  (final? (null? (cdr fields))))
+;; 		      (write curr-field)
+;; 		      (if (not final?) (display ","))
+;; 		      (column-loop (cdr fields))))))
+;; 	    records))
 (define (write-csv records)
   ;; Outer loop across rows
   (for-each (lambda (row)
@@ -227,7 +242,7 @@
 		    (let ((curr-field (format-csv-record (car fields)))
 			  (final? (null? (cdr fields))))
 		      (write curr-field)
-		      (if (not final?) (display ","))
+		      (if (not final?) (display delimeter))
 		      (column-loop (cdr fields))))))
 	    records))
 
@@ -326,6 +341,8 @@
 ;;; Just what you think. This gets things done when you don't supply
 ;;; any command line options
 (define (main)
+  (if (not delimeter)
+      (set! delimeter (alist-ref 'delimeter options)))
   (task-dispatch)
   (exit 1))
 
@@ -339,6 +356,8 @@
 (define keep?)
 (define display-fields? #f)
 (define out-to-file? #f)
+;;; Default delimeter
+(define delimeter #\,)
 
 (set!-values (options operands)
 	     (args:parse (command-line-arguments) opts))
