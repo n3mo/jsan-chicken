@@ -206,6 +206,11 @@ delimeter"
   (map
    (lambda (curr-key) (nested-alist-ref curr-key alist)) keys))
 
+;;; Embedded quotes (" or ') in csv files should be doubled. i.e.,
+;;; " -> "" and ' -> ''
+(define (string-cleaner strng)
+  (string-append "\"" (irregex-replace/all "\"" strng "\"\"") "\""))
+
 ;;; Missing and true/false data can be adjusted here. Without this
 ;;; step, true/false data would be written to file as #t/#f and
 ;;; missing data as null. We change those behaviors to TRUE/FALSE and
@@ -215,6 +220,7 @@ delimeter"
    [(eq? record #t) 'TRUE]
    [(eq? record #f) 'FALSE]
    [(eq? record 'null) 'NA]
+   [(string? record) (string-cleaner record)]
    [else record]))
 
 ;;; This writes a list of lists (record) to disk. This procedure
@@ -241,7 +247,8 @@ delimeter"
 		    (newline)
 		    (let ((curr-field (format-csv-record (car fields)))
 			  (final? (null? (cdr fields))))
-		      (write curr-field)
+		      ;; (write curr-field)
+		      (display curr-field)
 		      (if (not final?) (display delimeter))
 		      (column-loop (cdr fields))))))
 	    records))
