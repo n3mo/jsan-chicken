@@ -68,8 +68,7 @@
 			  (set! keep? #t))
 	(args:make-option (r remove)  #:none "Data fields to remove"
 			  (set! keep? #f))
-	(args:make-option (delimeter)  (required: "DELIM") "Field
-delimeter"
+	(args:make-option (delimeter)  (required: "DELIM") "Delimeter"
 			  (set! delimeter #f))
 	(args:make-option (v version)  #:none "Version information"
 			  (print-version))
