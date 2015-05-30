@@ -32,7 +32,7 @@
 ;;; see the github page for this program at
 ;;; https://github.com/n3mo/dvr 
 
-(define json2csv-version "1.2.0 (2015-04-15)")
+(define json2csv-version "1.2.1 (2015-05-30)")
 
 (require-extension args)
 (require-extension files)
@@ -174,55 +174,6 @@
      [else (lset-difference equal? keys flds)])))
 
 ;;; Grab the value of a key from a nested alist
-;; (define (nested-alist-ref keys nested-alist)
-;;   (cond ((null? (cdr keys))
-;; 	 (alist-ref (car keys) nested-alist eqv? 'null))
-;; 	(else
-;; 	 (nested-alist-ref (cdr keys) (alist-ref (car keys)
-;; 						 nested-alist eqv? 'null)))))
-
-;; Working version prior to 2015-05-29:
-;; (define (nested-alist-ref keys nested-alist)
-;;   (let ((myvalue (alist-ref (car keys) nested-alist)))
-;;     (if myvalue
-;; 	(cond ([null? (cdr keys)]
-;; 	       (alist-ref (car keys) nested-alist eqv? 'null))
-;; 	      [else
-;; 	       (nested-alist-ref (cdr keys) (alist-ref (car keys)
-;; 						       nested-alist
-;; 						       eqv? 'null))])
-;; 	;; Else: a malformed json entry on this line. Return null
-;; 	;; (which gets converted (to NA as of 2015-03-13)
-;; 	'null)))
-
-;; (define (nested-alist-ref keys nested-alist)
-;;   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
-;;     (if (not (eqv? myvalue 'NA))
-;; 	(cond ([null? (cdr keys)]
-;; 	       (alist-ref (car keys) nested-alist eqv? 'null))
-;; 	      [else
-;; 	       (nested-alist-ref (cdr keys) (alist-ref (car keys)
-;; 						       nested-alist
-;; 						       eqv? 'null))])
-;; 	;; Else: a malformed json entry on this line. Return null
-;; 	;; (which gets converted (to NA as of 2015-03-13)
-;; 	'null)))
-;; (define (nested-alist-ref keys nested-alist)
-;;   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
-;;     (if (not (eqv? myvalue 'NA))
-;; 	(cond ([null? (cdr keys)] myvalue)
-;; 	      [else
-;; 	       (nested-alist-ref (cdr keys) myvalue)])
-;; 	;; Else: a malformed json entry on this line. Return null
-;; 	;; (which gets converted (to NA as of 2015-03-13)
-;; 	'null)))
-
-;;; Working version (and faster!)
-;; (define (nested-alist-ref keys nested-alist)
-;;   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
-;;     (cond [(eqv? myvalue 'NA) myvalue]
-;; 	  [(null? (cdr keys)) myvalue]
-;; 	  [else (nested-alist-ref (cdr keys) myvalue)])))
 (define (nested-alist-ref keys nested-alist)
   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
     (cond [(vector? myvalue) 'NA]
