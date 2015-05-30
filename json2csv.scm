@@ -1,4 +1,4 @@
-#!/home/nemo/bin/bin/csi -s
+#!/usr/local/bin/csi -s
 ;;; json2csv.scm --- Covert large json files to csv
 
 ;; Copyright 2015, Nicholas M. Van Horn
@@ -180,18 +180,55 @@
 ;; 	(else
 ;; 	 (nested-alist-ref (cdr keys) (alist-ref (car keys)
 ;; 						 nested-alist eqv? 'null)))))
+
+;; Working version prior to 2015-05-29:
+;; (define (nested-alist-ref keys nested-alist)
+;;   (let ((myvalue (alist-ref (car keys) nested-alist)))
+;;     (if myvalue
+;; 	(cond ([null? (cdr keys)]
+;; 	       (alist-ref (car keys) nested-alist eqv? 'null))
+;; 	      [else
+;; 	       (nested-alist-ref (cdr keys) (alist-ref (car keys)
+;; 						       nested-alist
+;; 						       eqv? 'null))])
+;; 	;; Else: a malformed json entry on this line. Return null
+;; 	;; (which gets converted (to NA as of 2015-03-13)
+;; 	'null)))
+
+;; (define (nested-alist-ref keys nested-alist)
+;;   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
+;;     (if (not (eqv? myvalue 'NA))
+;; 	(cond ([null? (cdr keys)]
+;; 	       (alist-ref (car keys) nested-alist eqv? 'null))
+;; 	      [else
+;; 	       (nested-alist-ref (cdr keys) (alist-ref (car keys)
+;; 						       nested-alist
+;; 						       eqv? 'null))])
+;; 	;; Else: a malformed json entry on this line. Return null
+;; 	;; (which gets converted (to NA as of 2015-03-13)
+;; 	'null)))
+;; (define (nested-alist-ref keys nested-alist)
+;;   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
+;;     (if (not (eqv? myvalue 'NA))
+;; 	(cond ([null? (cdr keys)] myvalue)
+;; 	      [else
+;; 	       (nested-alist-ref (cdr keys) myvalue)])
+;; 	;; Else: a malformed json entry on this line. Return null
+;; 	;; (which gets converted (to NA as of 2015-03-13)
+;; 	'null)))
+
+;;; Working version (and faster!)
+;; (define (nested-alist-ref keys nested-alist)
+;;   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
+;;     (cond [(eqv? myvalue 'NA) myvalue]
+;; 	  [(null? (cdr keys)) myvalue]
+;; 	  [else (nested-alist-ref (cdr keys) myvalue)])))
 (define (nested-alist-ref keys nested-alist)
-  (let ((myvalue (alist-ref (car keys) nested-alist)))
-    (if myvalue
-	(cond ([null? (cdr keys)]
-	       (alist-ref (car keys) nested-alist eqv? 'null))
-	      [else
-	       (nested-alist-ref (cdr keys) (alist-ref (car keys)
-						       nested-alist
-						       eqv? 'null))])
-	;; Else: a malformed json entry on this line. Return null
-	;; (which gets converted (to NA as of 2015-03-13)
-	'null)))
+  (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
+    (cond [(vector? myvalue) 'NA]
+	  [(eqv? myvalue 'NA) myvalue]
+	  [(null? (cdr keys)) myvalue]
+	  [else (nested-alist-ref (cdr keys) myvalue)])))
 
 ;;; Same as string->symbol, but works for a list of lists (of strings)
 (define (nested-string->symbol lists)
