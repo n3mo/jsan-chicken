@@ -5,7 +5,7 @@
 
 ;; Author: Nicholas M. Van Horn <vanhorn.nm@gmail.com>
 ;; Keywords: json csv convert conversion cli terminal command line
-;; Version: 1.2.1
+;; Version: 1.2.2
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 ;;; see the github page for this program at
 ;;; https://github.com/n3mo/dvr 
 
-(define json2csv-version "1.2.1 (2015-05-30)")
+(define json2csv-version "1.2.2 (2015-06-17)")
 
 (require-extension args)
 (require-extension files)
@@ -379,6 +379,4 @@
 
 (handle-exceptions exn (usage) (main))
 
-
-
-
+;;; End of file json2csv.scm
