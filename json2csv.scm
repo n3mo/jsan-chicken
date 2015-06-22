@@ -229,19 +229,29 @@
 
 ;;; This gets the work done
 ;; (define (json->csv in-file #!key (flds #f) (keep? #f))
-;;   (let ((keys (nested-alist-keys (read-json (read-line)) #:flds
-;; 				 flds #:keep? keep?)))
+;;   (let* ((json-sample (read-json (read-line)))
+;; 	 (vectorp (vector? json-sample))
+;; 	 (keys (if vectorp
+;; 		   (nested-alist-keys (car (vector->list json-sample))
+;; 				      #:flds flds #:keep? keep?)
+;; 		   (nested-alist-keys json-sample #:flds flds #:keep? keep?))))
     
 ;;     ;; Write the csv header
-;;     ;; (write-csv (list keys))
 ;;     (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
     
-;;     (let loop ((in (current-input-port)))
-;;       (receive (object remainder)
-;; 	  (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
-;; 	(when object
-;; 	  (write-csv (list (alist->nested-list object keys)))
-;; 	  (loop remainder))))))
+;;     ;; If the json stream is a single line, containing an array of
+;;     ;; sub-entries, we process differently. For streams organized as 1
+;;     ;; line per json entry, an alternative method is used
+;;     (if vectorp
+;; 	(for-each (lambda (entry)
+;; 		    (write-csv (list (alist->nested-list entry keys))))
+;; 		  (vector->list json-sample))
+;; 	(let loop ((in (current-input-port)))
+;; 	  (receive (object remainder)
+;; 	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
+;; 	    (when object
+;; 	      (write-csv (list (alist->nested-list object keys)))
+;; 	      (loop remainder)))))))
 (define (json->csv in-file #!key (flds #f) (keep? #f))
   (let* ((json-sample (read-json (read-line)))
 	 (vectorp (vector? json-sample))
@@ -257,9 +267,17 @@
     ;; sub-entries, we process differently. For streams organized as 1
     ;; line per json entry, an alternative method is used
     (if vectorp
-	(for-each (lambda (entry)
-		    (write-csv (list (alist->nested-list entry keys))))
-		  (vector->list json-sample))
+	(begin
+	  (for-each (lambda (entry)
+		      (write-csv (list (alist->nested-list entry keys))))
+		    (vector->list json-sample))
+	  (let loop ((line (read-line)))
+	    (unless (eof-object? line)
+	      (for-each (lambda (entry)
+			  (write-csv (list (alist->nested-list entry keys))))
+			(vector->list (read-json line)))
+	      (loop (read-line)))))
+	;; Single entry, non-array json streams
 	(let loop ((in (current-input-port)))
 	  (receive (object remainder)
 	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
