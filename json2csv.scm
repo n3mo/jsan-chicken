@@ -5,7 +5,7 @@
 
 ;; Author: Nicholas M. Van Horn <vanhorn.nm@gmail.com>
 ;; Keywords: json csv convert conversion cli terminal command line
-;; Version: 1.2.3
+;; Version: 1.2.4
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 ;;; see the github page for this program at
 ;;; https://github.com/n3mo/dvr 
 
-(define json2csv-version "1.2.3 (2015-06-22)")
+(define json2csv-version "1.2.4 (2015-06-24)")
 
 (require-extension args)
 (require-extension files)
@@ -59,8 +59,8 @@
 (define opts
   (list (args:make-option (h help)    #:none "Help information"
 			  (usage))
-	(args:make-option (input)   (required: "FILE")  "Read from file")
-	(args:make-option (output)  (required: "FILE")  "Write to file"
+	(args:make-option (i input)   (required: "FILE")  "Read from file")
+	(args:make-option (o output)  (required: "FILE")  "Write to file"
 			  (set! out-to-file? #t))
 	(args:make-option (l list)    #:none "List available data fields"
 			  (set! display-fields? #t))
@@ -68,7 +68,7 @@
 			  (set! keep? #t))
 	(args:make-option (r remove)  #:none "Data fields to remove"
 			  (set! keep? #f))
-	(args:make-option (delimeter)  (required: "DELIM") "Delimeter"
+	(args:make-option (d delimeter)  (required: "DELIM") "Delimeter"
 			  (set! delimeter #f))
 	(args:make-option (v version)  #:none "Version information"
 			  (print-version))
