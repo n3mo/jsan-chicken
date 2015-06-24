@@ -49,13 +49,19 @@ Because `json2csv` can also write to standard output (in addition to writing to 
 
 ## Installation
 
-A [self-contained binary package](http://www.nicholasvanhorn.com/software/json2csv.zip) has been pre-built for x86_64 Linux systems. This binary was built on Arch Linux (3.18.6) and should work on similar systems (it has also been tested to work on Ubuntu 12.04). For other systems you will need to build from source (see **Manual Build**).
+[Self-contained binary packages](http://www.nicholasvanhorn.com/software/) have been pre-built for x86_64 Linux systems. These binaries were built on Arch Linux and should work on similar systems (it has also been tested to work on Ubuntu 12.04). For other systems you will need to build from source (see **Manual Build**).
 
-- Download the [zipped package](http://www.nicholasvanhorn.com/software/json2csv.zip)
-- Unzip it in a destination folder of your choice
+- Download the [latest version x.x.x](http://www.nicholasvanhorn.com/software/) in zip or tar.gz format.
+- Unpack it in a destination folder of your choice, replacing x.x.x with an appropriate version number
 
 ```sh
-unzip json2csv.zip
+unzip json2csv-x.x.x-linux-x86_64.zip
+cd json2csv
+```
+or
+
+```sh
+tar -xzf json2csv-x.x.x-linux-x86_64.tar.gz
 cd json2csv
 ```
 
