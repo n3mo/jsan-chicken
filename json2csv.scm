@@ -5,7 +5,7 @@
 
 ;; Author: Nicholas M. Van Horn <vanhorn.nm@gmail.com>
 ;; Keywords: json csv convert conversion cli terminal command line
-;; Version: 1.2.4
+;; Version: 1.2.5
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 ;;; see the github page for this program at
 ;;; https://github.com/n3mo/dvr 
 
-(define json2csv-version "1.2.4 (2015-06-24)")
+(define json2csv-version "1.2.5 (2015-07-16)")
 
 (require-extension args)
 (require-extension files)
@@ -279,6 +279,10 @@
 	      (loop (read-line)))))
 	;; Single entry, non-array json streams
 	(let loop ((in (current-input-port)))
+	  ;; Write the first line, which was consumed in the
+	  ;; json-sample taken above
+	  (write-csv (list (alist->nested-list json-sample keys)))
+	  ;; Process the remaing data
 	  (receive (object remainder)
 	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
 	    (when object
