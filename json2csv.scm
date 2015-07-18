@@ -5,7 +5,7 @@
 
 ;; Author: Nicholas M. Van Horn <vanhorn.nm@gmail.com>
 ;; Keywords: json csv convert conversion cli terminal command line
-;; Version: 1.2.5
+;; Version: 1.2.6
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@
 ;;; see the github page for this program at
 ;;; https://github.com/n3mo/dvr 
 
-(define json2csv-version "1.2.5 (2015-07-16)")
+(define json2csv-version "1.2.6 (2015-07-18)")
 
 (require-extension args)
 (require-extension files)
@@ -70,6 +70,8 @@
 			  (set! keep? #f))
 	(args:make-option (d delimeter)  (required: "DELIM") "Delimeter"
 			  (set! delimeter #f))
+	(args:make-option (n noheader)  #:none "Skip column names header"
+			  (set! header? #f))
 	(args:make-option (v version)  #:none "Version information"
 			  (print-version))
 	))
@@ -228,31 +230,7 @@
 	    records))
 
 ;;; This gets the work done
-;; (define (json->csv in-file #!key (flds #f) (keep? #f))
-;;   (let* ((json-sample (read-json (read-line)))
-;; 	 (vectorp (vector? json-sample))
-;; 	 (keys (if vectorp
-;; 		   (nested-alist-keys (car (vector->list json-sample))
-;; 				      #:flds flds #:keep? keep?)
-;; 		   (nested-alist-keys json-sample #:flds flds #:keep? keep?))))
-    
-;;     ;; Write the csv header
-;;     (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
-    
-;;     ;; If the json stream is a single line, containing an array of
-;;     ;; sub-entries, we process differently. For streams organized as 1
-;;     ;; line per json entry, an alternative method is used
-;;     (if vectorp
-;; 	(for-each (lambda (entry)
-;; 		    (write-csv (list (alist->nested-list entry keys))))
-;; 		  (vector->list json-sample))
-;; 	(let loop ((in (current-input-port)))
-;; 	  (receive (object remainder)
-;; 	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
-;; 	    (when object
-;; 	      (write-csv (list (alist->nested-list object keys)))
-;; 	      (loop remainder)))))))
-(define (json->csv in-file #!key (flds #f) (keep? #f))
+(define (json->csv in-file #!key (flds #f) (keep? #f) (doheader? #t))
   (let* ((json-sample (read-json (read-line)))
 	 (vectorp (vector? json-sample))
 	 (keys (if vectorp
@@ -261,7 +239,8 @@
 		   (nested-alist-keys json-sample #:flds flds #:keep? keep?))))
     
     ;; Write the csv header
-    (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys)))
+    (if doheader?
+     (write-csv (list (map (lambda (x) (string-join (map symbol->string (flatten x)) ":")) keys))))
     
     ;; If the json stream is a single line, containing an array of
     ;; sub-entries, we process differently. For streams organized as 1
@@ -277,17 +256,19 @@
 			  (write-csv (list (alist->nested-list entry keys))))
 			(vector->list (read-json line)))
 	      (loop (read-line)))))
+
 	;; Single entry, non-array json streams
-	(let loop ((in (current-input-port)))
-	  ;; Write the first line, which was consumed in the
-	  ;; json-sample taken above
+	(begin
+	 ;; Write the first line, which was consumed in the
+	 ;; json-sample taken above
 	  (write-csv (list (alist->nested-list json-sample keys)))
 	  ;; Process the remaing data
-	  (receive (object remainder)
-	      (read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
-	    (when object
-	      (write-csv (list (alist->nested-list object keys)))
-	      (loop remainder)))))))
+	  (let loop ((in (current-input-port)))
+	    (receive (object remainder)
+		(read-json in consume-trailing-whitespace: #f chunk-size: (* 5 1024))
+	      (when object
+		(write-csv (list (alist->nested-list object keys)))
+		(loop remainder))))))))
 
 ;;; Print available json fields (including nested fields)
 ;; (define (print-fields)
@@ -343,13 +324,13 @@
 			(if display-fields? (print-fields))
 
 			(json->csv in-file #:flds field-args
-				   #:keep? keep?)))))]
+				   #:keep? keep? #:doheader? header?)))))]
 	     ;; User does NOT want to write to disk. Write to stdout
 	     [else (begin
 		     ;; User want to see available fields? Print and exit
 		     (if display-fields? (print-fields))
 		     
-		     (json->csv in-file #:flds field-args #:keep? keep?))]))))]
+		     (json->csv in-file #:flds field-args #:keep? keep? #:doheader? header?))]))))]
      ;; No input file was supplied. Read from stdin 
      [else
       (begin
@@ -370,9 +351,9 @@
 		    (with-output-to-file out-file
 		      (lambda ()
 			(json->csv in-file #:flds field-args
-				   #:keep? keep?)))))]
+				   #:keep? keep? #:doheader? header?)))))]
 	     ;; User does NOT want to write to disk. Write to stdout
-	     [else (json->csv in-file #:flds field-args #:keep? keep?)]))))]))
+	     [else (json->csv in-file #:flds field-args #:keep? keep? #:doheader? header?)]))))]))
   (exit 0))
 
 ;;; Just what you think. This gets things done when you don't supply
@@ -395,6 +376,8 @@
 (define out-to-file? #f)
 ;;; Default delimeter
 (define delimeter #\,)
+;;; Display header line with column names?
+(define header? #t)
 
 (set!-values (options operands)
 	     (args:parse (command-line-arguments) opts))
