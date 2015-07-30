@@ -1,51 +1,55 @@
-# json2csv
-Convert (and subset) json files to csv from the command line
+# jsan
+The JSON Swiss Army kNife. Convert, subset, repurpose, and otherwise extract information in JSON streams/files from the command line
 
-`json2csv` converts a json stream (from file or standard input) to a comma separated values (csv) file. Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large json files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting csv file. 
+`jsan` provides extraction of data from JSON streams (from file or standard input) and returns (to file or standard output) the result in user-customizable format. A common application is to convert JSON-encoded data into comma separated values (CSV) format.  Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large (or endlessly streaming) JSON files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting output. 
 
-Because `json2csv` can also write to standard output (in addition to writing to file), it can also serve as a useful exploration tool for quickly exploring json data (e.g., pulling user names across all entries). Output can be piped to other common command line tools (e.g., awk) as in traditional unix-like workflows.
+Because `jsan` can also write to standard output, it can also serve as a useful exploration tool for quickly exploring JSON data (e.g., pulling user names across all entries). Output can be piped to other common command line tools (e.g., awk) as in traditional unix-like workflows.
 
-## Usage
+## Usage Examples
 
 **For usage help:**
 
-    json2csv --help
+    jsan --help
 
 **To convert the file mydata.json to results.csv:**
 
-    json2csv --input=mydata.json --output=results.csv
+    jsan --input=mydata.json --output=results.csv
 
 **To list available data fields in mydata.json:**
 
-    json2csv --input=mydata.json --list
+    jsan --input=mydata.json --list
 
 **To convert AND only keep the data fields "text" and "created_on" while writing to standard output:**
 
-    json2csv --input=mydata.json --keep text created_on
+    jsan --input=mydata.json --keep text created_on
 
 **You can also remove named data fields. The following will keep all fields EXCEPT "email" and "phone":**
 
-    json2csv --input=mydata.json --remove email phone
+    jsan --input=mydata.json --remove email phone
 
 **Nested JSON data fields can be accessed by using a colon. To keep the fields user->screen_name and user->bio->address**
 
-    json2csv --input=mydata.json --keep user:screen_name user:bio:address
+    jsan --input=mydata.json --keep user:screen_name user:bio:address
 
 **Use pipes to use the output of other commands as input:**
 
-    cat mydata.json | json2csv
+    cat mydata.json | jsan
 
 **Combine and get creative. Let's list all users whose screen names start with "M":**
 
-    cat mydata.json | json2csv -k user:screen_name | grep '^"m'
+    cat mydata.json | jsan -k user:screen_name | grep '^"m'
 
 **Same as above, but dump the results into a file called names.txt**
 
-    cat mydata.json | json2csv -k user:screen_name | grep '^"m' > names.txt
+    cat mydata.json | jsan -k user:screen_name | grep '^"m' > names.txt
 
 **The delimeter can optionally be set (default = ","):**
 
-    json2csv --delimeter=','
+    jsan --delimeter=','
+
+**A header with "column" names is output by default. Suppress with:**
+
+    jsan --noheader
 
 ## Installation
 
@@ -55,35 +59,35 @@ Because `json2csv` can also write to standard output (in addition to writing to 
 - Unpack it in a destination folder of your choice, replacing x.x.x with an appropriate version number
 
 ```sh
-unzip json2csv-x.x.x-linux-x86_64.zip
-cd json2csv
+unzip jsan-x.x.x-linux-x86_64.zip
+cd jsan
 ```
 or
 
 ```sh
-tar -xzf json2csv-x.x.x-linux-x86_64.tar.gz
-cd json2csv
+tar -xzf jsan-x.x.x-linux-x86_64.tar.gz
+cd jsan
 ```
 
-- An executable named json2csv is located in the newly created folder "json2csv". You can run this file directly with `./json2csv`
+- An executable named jsan is located in the newly created folder "jsan". You can run this file directly with `./jsan`
 - Better yet, make a symbolic link to the executable somewhere on your path. Assuming ~/bin/ is on your path:
 
 ```sh
-ln -s ~/path/to/json2csv ~/bin/json2csv
+ln -s ~/path/to/jsan ~/bin/jsan
 ```
 
-Now you can call `json2csv` from within any directory.
+Now you can call `jsan` from within any directory.
 
 ### Manual Build
 
 #### Prerequisites
-To build json2csv from source, you will need [Chicken Scheme](http://www.call-cc.org/) installed on your system. This software was developed and tested on Chicken 4.9.0. Your mileage may vary on other versions. 
+To build jsan from source, you will need [Chicken Scheme](http://www.call-cc.org/) installed on your system. This software was developed and tested on Chicken 4.9.0. Your mileage may vary on other versions. 
 
 Additionally, you will need the following [Eggs](http://wiki.call-cc.org/eggs) installed:
 * medea
 * args
 
-json2csv also uses the following Units (which are included by default):
+jsan also uses the following Units (which are included by default):
 * file
 * srfi-1
 * srfi-13
@@ -92,16 +96,16 @@ json2csv also uses the following Units (which are included by default):
 Installation is simple once Chicken is properly installed:
 
 1. Clone the git repository into a directory of your choice
-2. Ensure that the file json2csv.scm is executable (`chmod +x json2csv.scm`)
+2. Ensure that the file jsan.scm is executable (`chmod +x jsan.scm`)
 
 #### Compiled
 For better performance, you should consider compiling the script to a binary executable. To do so, first follow the installation steps above, then compile the script with
 
 ```sh
-csc json2csv.scm -o json2csv
+csc jsan.scm -o jsan
 ```
 
-The resulting executable "json2csv" should be placed somewhere on your PATH.
+The resulting executable "jsan" should be placed somewhere on your PATH.
 
 ## License
 
