@@ -1,5 +1,5 @@
 # jsan
-The JSON Swiss Army kNife. Convert, subset, repurpose, and otherwise extract information in JSON streams/files from the command line
+The **J**SON **S**wiss **A**rmy k**N**ife. Convert, subset, repurpose, and otherwise extract information in JSON streams/files from the command line
 
 `jsan` provides extraction of data from JSON streams (from file or standard input) and returns (to file or standard output) the result in user-customizable format. A common application is to convert JSON-encoded data into comma separated values (CSV) format.  Conversion is fast and does not consume memory, allowing for conversion of arbitrarily large (or endlessly streaming) JSON files. Data fields can optionally be filtered during conversion so that only desired fields are retained in the resulting output. 
 
