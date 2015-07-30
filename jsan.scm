@@ -1,11 +1,10 @@
 #!/usr/local/bin/csi -s
-;;; json2csv.scm --- Covert large json files to csv
+;;; jsan.scm --- JSON Swiss Army kNife
 
 ;; Copyright 2015, Nicholas M. Van Horn
 
 ;; Author: Nicholas M. Van Horn <vanhorn.nm@gmail.com>
 ;; Keywords: json csv convert conversion cli terminal command line
-;; Version: 1.2.6
 
 ;; This file is free software; you can redistribute it and/or modify
 ;; it under the terms of the GNU General Public License as published by
@@ -32,7 +31,7 @@
 ;;; see the github page for this program at
 ;;; https://github.com/n3mo/dvr 
 
-(define json2csv-version "1.2.6 (2015-07-18)")
+(define jsan-version "1.3.0 (2015-07-29)")
 
 (require-extension args)
 (require-extension files)
@@ -82,7 +81,7 @@
 (define (usage)
  (with-output-to-port (current-error-port)
    (lambda ()
-     (print "Usage: json2csv --input=FILE... [options...]")
+     (print "Usage: jsan --input=FILE... [options...]")
      (newline)
      (print (args:usage opts))
      (print "Convert json FILE to csv. With no --input=FILE,")
@@ -94,7 +93,7 @@
      (print "data. For example, to keep only the fields \"timestamp\"")
      (print "and \"user:name\" in the file \"file.json\":")
      (newline)
-     (print "json2csv --input=file.json --keep timestamp user:name")
+     (print "jsan --input=file.json --keep timestamp user:name")
      (newline)
      (print "Report bugs to nemo1211 at gmail.")))
  (exit 1))
@@ -109,8 +108,8 @@
    (else (cons (car myargs) (list-operands (cdr myargs))))))
 
 (define (print-version)
-  (print "json2csv " json2csv-version)
-  (print "https://github.com/n3mo/json2csv")
+  (print "jsan " jsan-version)
+  (print "https://github.com/n3mo/jsan")
   (newline)
   (print "Copyright (C) 2015 Nicholas M. Van Horn")
   (print "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.")
@@ -384,4 +383,4 @@
 
 (handle-exceptions exn (usage) (main))
 
-;;; End of file json2csv.scm
+;;; End of file jsan.scm
