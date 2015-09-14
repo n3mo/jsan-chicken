@@ -53,7 +53,7 @@ Because `jsan` can also write to standard output, it can also serve as a useful 
 
 ## Installation
 
-[Self-contained binary packages](http://www.nicholasvanhorn.com/software/) have been pre-built for x86_64 Linux systems. These binaries were built on Arch Linux and should work on similar systems (it has also been tested to work on Ubuntu 12.04). For other systems you will need to build from source (see **Manual Build**).
+[Self-contained binary packages](http://www.nicholasvanhorn.com/software/) have been pre-built for Mac OS X and x86_64 Linux systems. Linux binaries were built on Arch Linux and should work on similar systems (it has also been tested to work on Ubuntu 12.04). Mac binaries were built on OS X 10.10.5, but should work for other recent version (your mileage may vary). For other systems you will need to build from source (see **Manual Build**).
 
 - Download the [latest version x.x.x](http://www.nicholasvanhorn.com/software/) in zip or tar.gz format.
 - Unpack it in a destination folder of your choice, replacing x.x.x with an appropriate version number
