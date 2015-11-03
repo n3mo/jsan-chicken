@@ -175,9 +175,17 @@
      [else (lset-difference equal? keys flds)])))
 
 ;;; Grab the value of a key from a nested alist
+;; (define (nested-alist-ref keys nested-alist)
+;;   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
+;;     (cond [(vector? myvalue) 'NA]
+;; 	  [(eqv? myvalue 'NA) myvalue]
+;; 	  [(null? (cdr keys)) myvalue]
+;; 	  [else (nested-alist-ref (cdr keys) myvalue)])))
 (define (nested-alist-ref keys nested-alist)
   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
-    (cond [(vector? myvalue) 'NA]
+    (cond [(vector? myvalue) (nested-alist-ref
+			      (cdr keys)
+			      (car (vector->list myvalue)))]
 	  [(eqv? myvalue 'NA) myvalue]
 	  [(null? (cdr keys)) myvalue]
 	  [else (nested-alist-ref (cdr keys) myvalue)])))
