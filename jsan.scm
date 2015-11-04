@@ -186,12 +186,20 @@
 	(map (lambda (x) (build-nested-key alist x)) keys))))
 
 ;;; This is the procedure to call
+;; (define (nested-alist-keys alist #!key (flds #f) (keep? #f))
+;;   (let* ((raw-keys (get-nested-alist-keys alist))
+;; 	 (keys (join (map paths-to-leaves raw-keys))))
+;;     (cond
+;;      [(null? flds) keys]
+;;      [keep? (lset-intersection equal? flds keys)]
+;;      [else (lset-difference equal? keys flds)])))
 (define (nested-alist-keys alist #!key (flds #f) (keep? #f))
   (let* ((raw-keys (get-nested-alist-keys alist))
 	 (keys (join (map paths-to-leaves raw-keys))))
     (cond
      [(null? flds) keys]
-     [keep? (lset-intersection equal? flds keys)]
+     ;; [keep? (lset-intersection equal? flds keys)]
+     [keep? flds]
      [else (lset-difference equal? keys flds)])))
 
 ;;; Grab the value of a key from a nested alist
