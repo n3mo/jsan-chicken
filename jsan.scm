@@ -149,14 +149,34 @@
 ;;       bar)
 
 ;;; Recursively find keys in a potentially-nested alist
+;; (define (build-nested-key alist key)
+;;   (if (or (not (list? alist)) (not (list? key)))
+;;       key
+;;       (let ((myvalue (alist-ref (car key) alist)))
+;; 	(if (not (list? myvalue))
+;; 	    key
+;; 	    (cons key
+;; 		  (get-nested-alist-keys myvalue))))))
+
+;; Helper procedure for handling vectors nested in alists. Some JSON
+;; arrays return as vectors such as #(((key value) (key2 value2))) and
+;; some as just #() (nothing nested). For nested arrays, we need to
+;; take the nested list out. For empty vectors, return the null list
+(define (handle-vector vec)
+  (cond
+   [(= (vector-length vec) 0) '()]
+   [else (vector-ref vec 0)]))
+
 (define (build-nested-key alist key)
-  (if (or (not (list? alist)) (not (list? key)))
+  (if (or (symbol? alist) (number? alist) (null? alist) (not (list? key)))
       key
       (let ((myvalue (alist-ref (car key) alist)))
-	(if (not (list? myvalue))
-	    key
-	    (cons key
-		  (get-nested-alist-keys myvalue))))))
+	(cond
+	 [(vector? myvalue) 
+	  (cons key (get-nested-alist-keys (handle-vector myvalue)))]
+	 [(not (list? myvalue)) key]
+	 [else (cons key
+		     (get-nested-alist-keys myvalue))]))))
 
 (define (get-nested-alist-keys alist)
   (if (not (list? alist))
@@ -185,7 +205,7 @@
   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
     (cond [(vector? myvalue) (nested-alist-ref
 			      (cdr keys)
-			      (car (vector->list myvalue)))]
+			      (handle-vector myvalue))]
 	  [(eqv? myvalue 'NA) myvalue]
 	  [(null? (cdr keys)) myvalue]
 	  [else (nested-alist-ref (cdr keys) myvalue)])))
