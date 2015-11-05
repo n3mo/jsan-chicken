@@ -39,18 +39,6 @@
 (require-extension srfi-1)
 (require-extension medea)
 
-;;; To provide consistent access to JSON elements, we turn JSON arrays
-;;; to lists instead of vectors (code taken from medea egg example)
-;; Parsing JSON arrays as lists instead of vectors
-;; (define array-as-list-parser
-;;   (cons 'array (lambda (x) x)))
-;; (json-parsers (cons array-as-list-parser (json-parsers)))
-
-;;; Version with list flattening
-;; (define array-as-list-parser
-;;   (cons 'array (lambda (x) (flatten x))))
-;; (json-parsers (cons array-as-list-parser (json-parsers)))
-
 ;;; The following list contains all defined command line options
 ;;; available to the user. For example, (h help) makes all of the
 ;;; following equivalent options available at runtime: -h, -help, --h,
@@ -148,16 +136,6 @@
 ;;       (tree-leaf? tree) (tree-label tree) (tree-children tree))) (newline))
 ;;       bar)
 
-;;; Recursively find keys in a potentially-nested alist
-;; (define (build-nested-key alist key)
-;;   (if (or (not (list? alist)) (not (list? key)))
-;;       key
-;;       (let ((myvalue (alist-ref (car key) alist)))
-;; 	(if (not (list? myvalue))
-;; 	    key
-;; 	    (cons key
-;; 		  (get-nested-alist-keys myvalue))))))
-
 ;; Helper procedure for handling vectors nested in alists. Some JSON
 ;; arrays return as vectors such as #(((key value) (key2 value2))) and
 ;; some as just #() (nothing nested). For nested arrays, we need to
@@ -167,6 +145,7 @@
    [(= (vector-length vec) 0) '()]
    [else (vector-ref vec 0)]))
 
+;;; Recursively find keys in a potentially-nested alist
 (define (build-nested-key alist key)
   (if (or (symbol? alist) (number? alist) (null? alist) (not (list? key)))
       key
@@ -186,13 +165,6 @@
 	(map (lambda (x) (build-nested-key alist x)) keys))))
 
 ;;; This is the procedure to call
-;; (define (nested-alist-keys alist #!key (flds #f) (keep? #f))
-;;   (let* ((raw-keys (get-nested-alist-keys alist))
-;; 	 (keys (join (map paths-to-leaves raw-keys))))
-;;     (cond
-;;      [(null? flds) keys]
-;;      [keep? (lset-intersection equal? flds keys)]
-;;      [else (lset-difference equal? keys flds)])))
 (define (nested-alist-keys alist #!key (flds #f) (keep? #f))
   (let* ((raw-keys (get-nested-alist-keys alist))
 	 (keys (join (map paths-to-leaves raw-keys))))
@@ -203,20 +175,26 @@
      [else (lset-difference equal? keys flds)])))
 
 ;;; Grab the value of a key from a nested alist
-;; (define (nested-alist-ref keys nested-alist)
-;;   (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
-;;     (cond [(vector? myvalue) 'NA]
-;; 	  [(eqv? myvalue 'NA) myvalue]
-;; 	  [(null? (cdr keys)) myvalue]
-;; 	  [else (nested-alist-ref (cdr keys) myvalue)])))
 (define (nested-alist-ref keys nested-alist)
-  (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
-    (cond [(vector? myvalue) (nested-alist-ref
-			      (cdr keys)
-			      (handle-vector myvalue))]
-	  [(eqv? myvalue 'NA) myvalue]
-	  [(null? (cdr keys)) myvalue]
-	  [else (nested-alist-ref (cdr keys) myvalue)])))
+  (handle-exceptions exn
+      ;; Nested-alist isn't an alist after all. Stringify and
+      ;; return. The side-effect of this is a strength and weakness:
+      ;; you can access anything within a JSON structure, including
+      ;; nodes that are trees. Thus, in the JSON tree
+      ;; top->middle->bottom, jsan CAN return top (as
+      ;; middle->bottom), middle (as bottom), and bottom (as the
+      ;; contents of bottom). To combat this, jsan --list only lists
+      ;; endpoints. That is, only top:middle:bottom is listed for
+      ;; users. But the savvy user can request top or top:middle if
+      ;; they explicitly ask for it with jsan --keep
+      (->string nested-alist)
+      (let ((myvalue (alist-ref (car keys) nested-alist eqv? 'NA)))
+	(cond [(vector? myvalue) (nested-alist-ref
+				  (cdr keys)
+				  (handle-vector myvalue))]
+	      [(eqv? myvalue 'NA) myvalue]
+	      [(null? (cdr keys)) myvalue]
+	      [else (nested-alist-ref (cdr keys) myvalue)]))))
 
 ;;; Same as string->symbol, but works for a list of lists (of strings)
 (define (nested-string->symbol lists)
@@ -306,13 +284,6 @@
 		(loop remainder))))))))
 
 ;;; Print available json fields (including nested fields)
-;; (define (print-fields)
-;;   (for-each
-;;    (lambda (x)
-;;      (print (string-join (map symbol->string x) ":")))
-;;    (nested-alist-keys (read-json
-;; 		       (read-line))))
-;;   (exit 0))
 (define (print-fields)
   (let* ((json-sample (read-json (read-line)))
 	 (json-header (if (vector? json-sample)
@@ -399,11 +370,6 @@
   (task-dispatch)
   (exit 1))
 
-;;; This gets the ball rolling and handles exceptiouns (and must come
-;;; last) 
-;; (receive (options operands)
-;;     (args:parse (command-line-arguments) opts)
-;;   (handle-exceptions exn (usage) (main)))
 (define options)
 (define operands)
 (define keep?)
@@ -417,6 +383,8 @@
 (set!-values (options operands)
 	     (args:parse (command-line-arguments) opts))
 
+;;; This gets the ball rolling and handles exceptions (and must come
+;;; last) 
 (handle-exceptions exn (usage) (main))
 
 ;;; End of file jsan.scm
