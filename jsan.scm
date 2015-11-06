@@ -24,14 +24,10 @@
 
 ;;; Commentary:
 
-;;; This program provides a simple and efficient command line
-;;; interface for quickly listing and managing video files stored in
-;;; nested directories on a file system. Run dvr.scm -h for
-;;; information on how to use the program. For up to date information,
-;;; see the github page for this program at
-;;; https://github.com/n3mo/dvr 
+;; See https://github.com/n3mo/jsan for up-to-date documentation and
+;; usage examples
 
-(define jsan-version "1.3.0 (2015-07-29)")
+(define jsan-version "1.4.0 (2015-11-05)")
 
 (require-extension args)
 (require-extension files)
