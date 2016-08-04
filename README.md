@@ -107,6 +107,15 @@ csc jsan.scm -o jsan
 
 The resulting executable "jsan" should be placed somewhere on your PATH.
 
+# Bugs & Improvements
+
+Please report any problems that you find, along with any suggestions or contributions to the theme. 
+
+You can support this project, or my other projects via [ChangeTip](http://n3mo.tip.me)
+
+[![Support via ChangeTip](http://www.nicholasvanhorn.com/images/changetip.png)](http://n3mo.tip.me)
+
+
 ## License
 
 Copyright (C) 2015 Nicholas M. Van Horn
