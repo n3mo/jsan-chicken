@@ -70,10 +70,10 @@ cd jsan
 ```
 
 - An executable named jsan is located in the newly created folder "jsan". You can run this file directly with `./jsan`
-- Better yet, make a symbolic link to the executable somewhere on your path. Assuming ~/bin/ is on your path:
+- Better yet, make a symbolic link to the executable somewhere on your path. Working from within the `jsan` directory created by the unpacking command, run the following:
 
 ```sh
-ln -s ~/path/to/jsan ~/bin/jsan
+sudo ln -s `pwd`/jsan /usr/local/bin
 ```
 
 Now you can call `jsan` from within any directory.
