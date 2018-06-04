@@ -95,7 +95,7 @@
   (print "jsan " jsan-version)
   (print "https://github.com/n3mo/jsan")
   (newline)
-  (print "Copyright (C) 2015 Nicholas M. Van Horn")
+  (print "Copyright (C) 2015-2018 Nicholas M. Van Horn")
   (print "License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.")
   (print "This is free software: you are free to change and redistribute it.")
   (print "There is NO WARRANTY, to the extent permitted by law.")

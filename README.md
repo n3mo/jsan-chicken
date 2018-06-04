@@ -118,7 +118,7 @@ You can support this project, or my other projects via [ChangeTip](http://n3mo.t
 
 ## License
 
-Copyright (C) 2015 Nicholas M. Van Horn
+Copyright (C) 2015-2018 Nicholas M. Van Horn
 
 Author: Nicholas M. Van Horn <nvanhorn@nicholasvanhorn.com>
 
